@@ -1,0 +1,80 @@
+STAGE 1:
+========
+There are multiple ways of exposing a web application to the internet:
+
+* API Gateway Rest/HTTP:
+    - Allows you to easily manage your entire APIS
+    - Provides API security, authorization, config and monitoring
+    - Supports integration with AWS Lambda making it an ideal 
+      service for serverless architecture with more options that a bare Function URL
+
+* Load Balancer Application/Netowrk:
+    - A far more robust service
+    - Can distribute traffic among many types of targets like:
+      Lambda functions, containers, EC2 instances etc..
+    - Provide much more high availability, scalability and fault tolerance
+      compared to other methods listed here
+    - Mainly used for distributing traffic to backend services and not to
+      be directly exposed to web applications
+
+* Function URL:
+    - If you're only using serverless architecture a function url can be a good option
+    - Exposing functions and microservices via a function url makes
+      using it very easy
+    - Gives you a very good control and flexibility on individual functions
+      but is not very scalable and or robust
+
+In conclusion:
+    The particular requirements and architectural design of an application 
+    will determine which alternative you should use. 
+    AWS API Gateway, which provides complete API administration features, 
+    is an appropriate option if your application is API-centric.
+
+    A load balancer service can offer fault tolerance and scalability 
+    if your typical web application has numerous backend targets which are not only
+    API-oriented.
+
+    Serverless applications and situations where you want to directly expose 
+    specific functions or microservices should use direct access via Function URL,
+    not to be used with robust applications that require availability/scalability/fault tolerance.
+
+STAGE 2:
+========
+* Considerations:
+	- The EC2 instances should be located in a private subnet and not be exposed to the internet at all.
+	- Only ssh access should be allowed to the ec2 instances.
+    - Security groups should be created to manage the inbound and outbound rules allowing only certified users in.
+
+* Solutions:
+	1. 	Use EC2 SSM access to login from the aws console without opening any port from the secured
+		linux servers.
+	
+	2. 	Create an EC2 linux server which will be in a public subnet, and will function as a bastion server,
+		meaning we won't connect to the secured ec2 linux servers through one connection, but we will
+		firstly ssh to a middle-man, in our case the bastion server that is in the public subnet,
+		and then from him we will ssh to our desired private subnet ec2 linux servers
+		
+* When to use each solution and why:
+	1. 	When you don't want to expose the secure server to the internet in any way
+		and you don't need to access it from the outside world it is the best and most secure option
+		because you can't access the server from no public and or private ip, no port is exposed, the only
+		way in is through an SSM connection which is granted if the server has the corrosponding IAM role
+	
+	2. 	When you want a remote access to the servers in the private subnet from external servers
+		the bastion server will be a good security point.
+		If you have to access the secure servers from an external place, a bastion server is a good solution
+		because even though in the end you do access the secure servers through the outside world, the bastion
+		server gives you a centrelized access point in which you can monitor the environment and secure it
+		to the best possible way you can with access rules, inbound/outbound rules, monitoring, logging and much more
+	
+* How would the solutions work:
+	1. 	Apply the 'AmazonSSMManagedInstanceCore' IAM role on the secured linux server intances and the give permissions
+		to the authorized users, wait a couple of minutes and you can login through the SSM access to the servers.
+		
+	2. 	Generate a key-pair.
+		Create a private subnet, launch the EC2 secure linux servers with the key-pair and assign them the private subnet.
+		Create a public subnet, create an EC2 linux instance with the key-pair and assign it the public subnet.
+		Allow agent forwarding and ssh into the the bastion server with your key-pair
+		Now that you're in the bastion server ssh to any of the private subnets linux server - it will use the already
+		supplied key-pair and now you will be in the private subnet linux server
+		
